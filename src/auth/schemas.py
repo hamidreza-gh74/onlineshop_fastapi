@@ -9,8 +9,8 @@ from src.errors import EmailOrPhoneNotExista
 
 
 class UserCreateModel(SQLModel):
-    phone_number: Optional[str]
-    email: Optional[str]
+    phone_number: Optional[str] = Field(min_length=6)
+    email: Optional[str] = Field(min_length=6)
     password:str
 
     @model_validator(mode="after")
@@ -28,7 +28,7 @@ class UserModel(SQLModel):
     username: Optional[str]
     phone_number: Optional[str]
     email: Optional[str]
-    hash_password: Optional[str] = Field(exclude=True)
+    password_hash: Optional[str] = Field(exclude=True)
     is_verifed: Optional[bool] = Field(default=False)
     role:str 
     created_at: datetime 
@@ -39,10 +39,6 @@ class UserModel(SQLModel):
 class UserAddressModel(UserModel):
     addressers:Optional['Addreess'] 
 
-
-class UserLoginModel(SQLModel):
-    email:str = Field(max_length=40)
-    password:str = Field(min_length=6)
 
 
 

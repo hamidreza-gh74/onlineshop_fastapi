@@ -15,7 +15,7 @@ class User(ZeroModel, table = True):
     username: Optional[str]
     phone_number: Optional[str]
     email: Optional[str]
-    hash_password: Optional[str] = Field(exclude=True)
+    password_hash: Optional[str] = Field(exclude=True)
     is_verifed: Optional[bool] = Field(default=False)
     role:str = Field(
         sa_column=Column(pg.VARCHAR,nullable=False,server_default="user")

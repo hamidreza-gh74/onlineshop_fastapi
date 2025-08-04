@@ -33,15 +33,29 @@ class UserService:
 
         return user
     
-    async def user_exists(self, session: AsyncSession, *, email: Optional[str] = None, phone_number: Optional[str] = None) -> bool:
-        if email is not None:
+    async def user_exists(self, session: AsyncSession, email: Optional[str], phone_number: Optional[str]) -> bool:
+        if email is not None :
             user = await self.get_user_by_email(email, session)
-        elif phone_number is not None:
+        elif phone_number is not None :
             user = await self.get_user_by_phoneNumber(phone_number, session)
         else:
             raise EmailOrPhoneNotExista()
 
-        return user is not None
+        return user is not None 
+    
+    async def get_user(self,session,email: Optional[str],phone_number:Optional[str]):
+        if email is not None:
+            user = await self.get_user_by_email(email,session)
+        elif phone_number is not None:
+            user = await self.get_user_by_phoneNumber(phone_number,session)
+        else:
+            raise EmailOrPhoneNotExista()
+        
+        if user is None:
+            raise UserNotFound()
+        
+        return user
+
     
     async def create_user(self,
                           user_data:UserCreateModel,

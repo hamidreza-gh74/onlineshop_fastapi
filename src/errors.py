@@ -90,7 +90,7 @@ def register_error_handlers(app: FastAPI):
         create_exception_handler(
             status_code=status.HTTP_403_FORBIDDEN,
             initial_detail={
-                "message": "User with email already exists",
+                "message": "User already exists",
                 "error_code": "user_exists",
             },
         ),

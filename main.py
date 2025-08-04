@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from src.auth.routes.user_route import auth_router
+from src.auth.routes import auth_router
 from src.errors import register_error_handlers
 
 

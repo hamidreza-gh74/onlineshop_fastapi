@@ -1,19 +1,19 @@
-"""add user and address
+"""'init'
 
-Revision ID: 2c85e8e7bf75
+Revision ID: 4a2c477bad1a
 Revises: 
-Create Date: 2025-07-24 12:34:18.029661
+Create Date: 2025-08-03 14:50:15.181948
 
 """
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
 import sqlmodel
+import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '2c85e8e7bf75'
+revision: str = '4a2c477bad1a'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -28,25 +28,22 @@ def upgrade() -> None:
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('first_name', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('last_name', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('gender', sa.Enum('male', 'female', name='genderenum'), nullable=True),
-    sa.Column('birthdate', sa.Date(), nullable=True),
-    sa.Column('phone_number', sa.VARCHAR(), nullable=True),
-    sa.Column('email', sa.VARCHAR(), nullable=True),
-    sa.Column('national_code', sa.VARCHAR(), nullable=True),
+    sa.Column('gender', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('birthday', sa.Date(), nullable=True),
+    sa.Column('username', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('phone_number', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('email', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('hash_password', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('is_verifed', sa.Boolean(), nullable=True),
     sa.Column('role', sa.VARCHAR(), server_default='user', nullable=False),
-    sa.Column('password_hash', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('is_verified', sa.Boolean(), nullable=False),
-    sa.PrimaryKeyConstraint('uid'),
-    sa.UniqueConstraint('email'),
-    sa.UniqueConstraint('national_code'),
-    sa.UniqueConstraint('phone_number')
+    sa.PrimaryKeyConstraint('uid')
     )
     op.create_index(op.f('ix_users_uid'), 'users', ['uid'], unique=False)
     op.create_table('addresses',
     sa.Column('uid', sa.Uuid(), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
-    sa.Column('user_id', sa.Uuid(), nullable=True),
+    sa.Column('user_uid', sa.Uuid(), nullable=True),
     sa.Column('title', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('province', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('city', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
@@ -54,7 +51,7 @@ def upgrade() -> None:
     sa.Column('postal_code', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('phone', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('is_default', sa.Boolean(), nullable=False),
-    sa.ForeignKeyConstraint(['user_id'], ['users.uid'], ),
+    sa.ForeignKeyConstraint(['user_uid'], ['users.uid'], ),
     sa.PrimaryKeyConstraint('uid')
     )
     op.create_index(op.f('ix_addresses_uid'), 'addresses', ['uid'], unique=False)

@@ -1,8 +1,13 @@
 from core.model.zero_model import ZeroModel
+from sqlmodel import SQLModel
 from sqlmodel import Field,Column ,Relationship
 from datetime import date
 from typing import Optional
 import sqlalchemy.dialects.postgresql as pg
+from datetime import datetime,timedelta
+import uuid
+from sqlalchemy import func
+
 
 
 class User(ZeroModel, table = True):
@@ -22,9 +27,57 @@ class User(ZeroModel, table = True):
         )
     
     addressers:Optional['Addreess'] = Relationship(back_populates="user",sa_relationship_kwargs={"lazy":"selectin"})
-
+    codes: list["VerificationCode"] = Relationship(back_populates="user")
 
 from src.address.models import Addreess
 
+
+
+
+class VerificationCode(SQLModel, table=True):
+    __tablename__ = "verification"
+    uid: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        index=True
+    )
+    user_id: uuid.UUID = Field(foreign_key="users.uid")
+    code: str
+    created_at: datetime = Field(
+        default_factory=datetime.now,
+        sa_column_kwargs={"server_default": func.now()}
+                                    )
+    expires_at: datetime = Field(default_factory=lambda: datetime.now() + timedelta(minutes=2))
+   
+
+    user: Optional["User"] = Relationship(back_populates="codes")
+
+
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

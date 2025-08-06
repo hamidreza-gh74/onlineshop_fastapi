@@ -37,12 +37,14 @@ class TokenBearer(HTTPBearer):
         if not self.token_valid(token):
             raise InvalidToken()
         
-        if await token_in_blocklist(token_data['jti']):
-            raise InvalidToken()
+        # if await token_in_blocklist(token_data['jti']):
+        #     raise InvalidToken()
 
         self.verify_token_data(token_data)
         
-        return token_data
+        return {"token_data" : token_data,
+                "token" : token}
+
 
     def token_valid(self, token: str) -> bool:
 
@@ -73,7 +75,7 @@ class RefreshTokenBearer(TokenBearer):
 async def get_current_user(token_detail:dict = Depends(AccessTokenBearer()),
                      session:AsyncSession = Depends(get_session)):
 
-    user_uid = uuid.UUID(token_detail['user']['user_uid'])
+    user_uid = uuid.UUID(token_detail['token_data']['user']['user_uid'])
     user = await user_service.get_user_by_uid(user_uid,session)
 
     return user

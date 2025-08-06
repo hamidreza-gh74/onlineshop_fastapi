@@ -28,6 +28,8 @@ class User(ZeroModel, table = True):
     
     addressers:Optional['Addreess'] = Relationship(back_populates="user",sa_relationship_kwargs={"lazy":"selectin"})
     codes: list["VerificationCode"] = Relationship(back_populates="user")
+    refresh_tokens: list["RefreshToken"] = Relationship(back_populates="user")
+
 
 from src.address.models import Addreess
 
@@ -54,6 +56,16 @@ class VerificationCode(SQLModel, table=True):
 
 
     
+class RefreshToken(SQLModel, table=True):
+    uid: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
+    user_id: uuid.UUID = Field(foreign_key="users.uid")
+    refresh_token: str = Field(index=True, unique=True)
+    expires_at: datetime
+    created_at: datetime = Field(default_factory=datetime.now)
+    is_revoked: bool = Field(default=False)
+
+    user: Optional["User"] = Relationship(back_populates="refresh_tokens")
+
 
 
 

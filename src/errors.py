@@ -5,11 +5,15 @@ from fastapi.responses import JSONResponse
 
 
 class ZeroException(Exception):
-    """This is the base class for all bookly errors"""
+    """This is the base class for all  errors"""
     pass
 
 class InvalidToken(ZeroException):
     """User has provided an invalid or expired token"""
+    pass
+
+class RevokedToken(ZeroException):
+    """User has provided a token that has been revoked"""
     pass
 
 class RevokedToken(ZeroException):

@@ -26,12 +26,12 @@ class User(ZeroModel, table = True):
         sa_column=Column(pg.VARCHAR,nullable=False,server_default="user")
         )
     
-    addressers:Optional['Addreess'] = Relationship(back_populates="user",sa_relationship_kwargs={"lazy":"selectin"})
+    addresses:list['Address'] = Relationship(back_populates="user",sa_relationship_kwargs={"lazy":"selectin"})
     codes: list["VerificationCode"] = Relationship(back_populates="user")
     refresh_tokens: list["RefreshToken"] = Relationship(back_populates="user")
 
 
-from src.address.models import Addreess
+from src.address.models import Address
 
 
 

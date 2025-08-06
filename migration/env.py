@@ -9,7 +9,7 @@ from src.config import  config
 from sqlmodel import SQLModel
 from alembic import context
 from src.auth.models import User
-from src.address.models import Addreess
+from src.address.models import Address
 
 database_url = config.DATABASE_URL
 

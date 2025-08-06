@@ -29,7 +29,7 @@ class UserModel(SQLModel):
     phone_number: Optional[str]
     email: Optional[str]
     password_hash: Optional[str] = Field(exclude=True)
-    is_verifed: Optional[bool] = Field(default=False)
+    is_verifed: Optional[bool] 
     role:str 
     created_at: datetime 
     updated_at: datetime 
@@ -37,7 +37,7 @@ class UserModel(SQLModel):
 
 
 class UserAddressModel(UserModel):
-    addressers:Optional['Addreess'] 
+    addresses:list['Address'] = [] 
 
 
 
@@ -50,4 +50,4 @@ class PasswordResetConfirmModel(SQLModel):
      confirm_password: str
 
 
-from src.address.models import Addreess
+from src.address.models import Address

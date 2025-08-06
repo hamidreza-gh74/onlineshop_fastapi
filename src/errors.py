@@ -44,8 +44,8 @@ class EmailOrPhoneNotExista(ZeroException):
     pass
 
 
-class BookNotFound(ZeroException):
-    """Book Not found"""
+class AddressNotFound(ZeroException):
+    """Address Not found"""
     pass
 
 class TagNotFound(ZeroException):
@@ -111,12 +111,12 @@ def register_error_handlers(app: FastAPI):
         ),
     )
     app.add_exception_handler(
-        BookNotFound,
+        AddressNotFound,
         create_exception_handler(
             status_code=status.HTTP_404_NOT_FOUND,
             initial_detail={
-                "message": "Book not found",
-                "error_code": "book_not_found",
+                "message": "Address not found",
+                "error_code": "address_not_found",
             },
         ),
     )
@@ -203,17 +203,7 @@ def register_error_handlers(app: FastAPI):
         ),
     )
 
-    app.add_exception_handler(
-        BookNotFound,
-        create_exception_handler(
-            status_code=status.HTTP_404_NOT_FOUND,
-            initial_detail={
-                "message": "Book Not Found",
-                "error_code": "book_not_found",
-            },
-        ),
-    )
-
+  
     app.add_exception_handler(
         AccountNotVerified,
         create_exception_handler(

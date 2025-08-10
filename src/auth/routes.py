@@ -5,12 +5,14 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi.exceptions import HTTPException
 from datetime import timedelta, datetime
 from src.db.main import get_session
-from src.auth.schemas import UserCreateModel,UserModel,UserAddressModel
+from src.auth.schemas import UserCreateModel,UserModel,UserAddressModel,EmailSchema, otpSchema
 from src.auth.service import UserService
 from src.auth.dependencies import AccessTokenBearer,RefreshTokenBearer,get_current_user,RoleChecker
-from src.auth.utils import verify_password,create_access_token
-from src.auth.models import RefreshToken
+from src.auth.utils import verify_password,create_access_token,generate_otp_code
+from src.auth.models import RefreshToken,VerificationCode,User
 from src.errors import InvalidCredentials, InvalidToken ,RevokedToken,UserAlreadyExists
+from src.mail import create_message,mail
+
 
 user_service = UserService()
 access_token_bearer = AccessTokenBearer()
@@ -162,7 +164,7 @@ async def revook_token(token_details:dict = Depends(refresh_token_bearer),
 async def revook_token(token_details:dict = Depends(refresh_token_bearer),
                        session:AsyncSession = Depends(get_session)):
     
-    user_uid = token_details["user"]["user_uid"]
+    user_uid = token_details["token_data"]["user"]["user_uid"]
 
     tokens = await session.exec(
     select(RefreshToken).where(RefreshToken.user_id == user_uid)
@@ -179,3 +181,79 @@ async def revook_token(token_details:dict = Depends(refresh_token_bearer),
 async def get_current_user(user = Depends(get_current_user)):
     return user
 
+
+@auth_router.post('/send_mail')
+async def send_mail(emails:EmailSchema):
+    emails = emails.addresses
+    html = """
+    <h1> welcome to my online shop </h1>
+    <p> enter below code to finish your signup: </p>
+    <h3> {}  </h3>
+    
+    """
+    message = create_message(
+        recipients=emails,
+        subject="welcome",
+        body=html
+    )
+    await mail.send_message(message)
+    return {"message" : "email send successfully"}
+
+
+
+@auth_router.post("/requestOtp/email")
+async def request_otp(user: User = Depends(get_current_user),
+                      session: AsyncSession = Depends(get_session)):
+    code = generate_otp_code() 
+    user_uid = user.uid
+    email = user.email
+
+    verification_code = VerificationCode(code=code,user_id=user_uid)
+    session.add(verification_code)
+    await session.commit()
+    # send email
+    html = f"""
+    <h1> welcome to my online shop </h1>
+    <p> enter below code to finish your signup: </p>
+    <h3> {code}  </h3>
+    
+    """    
+    message = create_message(
+        recipients=[email],
+        subject="otp code",
+        body=html
+    )
+    await mail.send_message(message)
+    return {"message" : "otp send to your email successfully"}
+
+@auth_router.post("/verifyOtp")
+async def verify_otp(code: otpSchema, 
+               session:AsyncSession = Depends(get_session),
+               user: User = Depends(get_current_user)
+               ):
+    user_uid = user.uid
+    
+    statement = select(VerificationCode).where(
+        VerificationCode.user_id == user_uid        
+    ).order_by(VerificationCode.created_at.desc())
+
+    result = await session.exec(statement)
+    otp = result.first()
+    print(code.code)
+    print(otp.code)
+
+    if not otp:
+        raise HTTPException(status_code=400, detail="Invalid or expired code")
+    
+    if otp.code != code.code:
+        raise  HTTPException(status_code=400, detail="wrong code")
+    
+    if otp.expires_at < datetime.now():
+        raise  HTTPException(status_code=400, detail="expired code")
+    
+    
+    user.is_verifed = True
+    session.add(user)
+    
+    await session.commit()
+    return {"message": "OTP verified successfully"}

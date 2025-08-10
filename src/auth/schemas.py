@@ -41,6 +41,9 @@ class UserAddressModel(UserModel):
 
 
 
+class EmailSchema(SQLModel):
+     addresses: list[str]
+
 
 class PasswordResetModel(SQLModel):
      email:str
@@ -48,6 +51,9 @@ class PasswordResetModel(SQLModel):
 class PasswordResetConfirmModel(SQLModel):
      new_password: str
      confirm_password: str
+
+class otpSchema(SQLModel):
+    code:str
 
 
 from src.address.models import Address

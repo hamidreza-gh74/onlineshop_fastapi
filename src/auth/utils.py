@@ -4,6 +4,7 @@ import jwt
 import uuid
 from src.config import config
 import logging
+import random 
 from itsdangerous import URLSafeTimedSerializer
 
 ACCESS_TOKEN_EXPIRY = 3600
@@ -58,6 +59,10 @@ serializer = URLSafeTimedSerializer(
     salt= "email.configuration"
 )
 
+
+
+def generate_otp_code() -> str:
+    return f"{random.randint(0, 999999):06d}"
 
 def create_url_safe_token(data:dict):
    

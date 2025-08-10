@@ -56,4 +56,15 @@ class otpSchema(SQLModel):
     code:str
 
 
+class PasswordResetModel(SQLModel):
+     email:str
+
+class PasswordResetConfirmModel(SQLModel):
+     new_password: str
+     confirm_password: str
+
+
+
+
+
 from src.address.models import Address

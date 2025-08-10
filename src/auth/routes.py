@@ -5,13 +5,14 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi.exceptions import HTTPException
 from datetime import timedelta, datetime
 from src.db.main import get_session
-from src.auth.schemas import UserCreateModel,UserModel,UserAddressModel,EmailSchema, otpSchema
+from src.auth.schemas import UserCreateModel,UserModel,UserAddressModel,EmailSchema, otpSchema, PasswordResetModel, PasswordResetConfirmModel
 from src.auth.service import UserService
 from src.auth.dependencies import AccessTokenBearer,RefreshTokenBearer,get_current_user,RoleChecker
-from src.auth.utils import verify_password,create_access_token,generate_otp_code
+from src.auth.utils import verify_password,create_access_token,generate_otp_code,create_url_safe_token,decode_url_safe_token, generate_password_hash
 from src.auth.models import RefreshToken,VerificationCode,User
-from src.errors import InvalidCredentials, InvalidToken ,RevokedToken,UserAlreadyExists
+from src.errors import InvalidCredentials, InvalidToken ,RevokedToken,UserAlreadyExists, UserNotFound
 from src.mail import create_message,mail
+from src.config import config
 
 
 user_service = UserService()
@@ -256,4 +257,89 @@ async def verify_otp(code: otpSchema,
     session.add(user)
     
     await session.commit()
-    return {"message": "OTP verified successfully"}
+    
+
+@auth_router.post('/password_reset')
+async def password_reset(email_data:PasswordResetModel):
+    email = email_data.email
+    token = create_url_safe_token({"email":email})
+    link = f"http://{config.DOMAIN}/api/v1/auth/password_reset_confirm/{token}"
+    html_message = f"""
+    <h1> resset your password</h1>
+    <p> please click this : <a href={link}> link  </a> to reset your password </p>
+    """
+    message = create_message(
+        recipients=[email],
+        subject="resset your password",
+        body=html_message
+    )
+
+    await mail.send_message(message)
+
+    
+    return JSONResponse(
+        content={
+        "message" : "please check your email to reset your password"
+         } ,
+        status_code=status.HTTP_200_OK
+    )
+
+
+@auth_router.post('/password_reset')
+async def password_reset(email_data:PasswordResetModel):
+    email = email_data.email
+    token = create_url_safe_token({"email":email})
+    link = f"http://{config.DOMAIN}/api/v1/auth/password_reset_confirm/{token}"
+    html_message = f"""
+    <h1> resset your password</h1>
+    <p> please click this : <a href={link}> link  </a> to reset your password </p>
+    """
+    message = create_message(
+        recipients=[email],
+        subject="resset your password",
+        body=html_message
+    )
+
+    await mail.send_message(message)
+
+    
+    return JSONResponse(
+        content={
+        "message" : "please check your email to reset your password"
+         } ,
+        status_code=status.HTTP_200_OK
+    )
+
+
+@auth_router.post('/password_reset_confirm/{token}')
+async def resset_account_password(token:str, 
+                                  password:PasswordResetConfirmModel,
+                                  session:AsyncSession=Depends(get_session)):
+    new_password = password.new_password
+    confirm_pasword = password.confirm_password
+
+    if new_password != confirm_pasword:
+        raise HTTPException(detail="password do not match",
+                            status_code= status.HTTP_400_BAD_REQUEST)
+
+    token_data = decode_url_safe_token(token)
+    user_email = token_data.get("email")
+    if user_email:
+        user = await user_service.get_user_by_email(user_email,session)
+        if not user:
+            raise UserNotFound()
+        
+        hash_password = generate_password_hash(new_password)
+        await user_service.update_user(user,{"password_hash":hash_password},session)
+
+        return JSONResponse(content= {"message":"password reset successfully"},
+                            status_code=status.HTTP_200_OK)
+    return JSONResponse(content= {"message":"Error occured during password reset"},
+                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+
+
+

@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     MAIL_SSL_TLS: bool = False
     USE_CREDENTIALS: bool = True
     VALIDATE_CERTS: bool = True
+     #  
+    DOMAIN: str  
     
  
 

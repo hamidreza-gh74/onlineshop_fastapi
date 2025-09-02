@@ -11,6 +11,8 @@ from alembic import context
 from src.auth.models import User
 from src.address.models import Address
 
+from src.catalogue.models import  *
+
 database_url = config.DATABASE_URL
 
 

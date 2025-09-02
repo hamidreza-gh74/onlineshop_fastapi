@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from src.auth.routes import auth_router
 from src.address.routes import address_router
+from src.catalogue.routes.route_category import category_router
 from src.errors import register_error_handlers
 
 
@@ -16,6 +17,7 @@ app = FastAPI(
 
 app.include_router(auth_router, prefix=f'/api/{version}/auth', tags=["auth"])
 app.include_router(address_router, prefix=f'/api/{version}/address', tags=["address"])
+app.include_router(category_router ,  prefix=f'/api/{version}/categories', tags=["categories"] )
 
 
 

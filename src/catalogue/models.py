@@ -6,6 +6,9 @@ from typing import Optional
 import uuid
 import enum
 from sqlalchemy import Index, func
+from sqlalchemy.orm import Session
+from sqlalchemy import ForeignKey
+
 
 
 
@@ -15,7 +18,7 @@ class AttributeType(enum.IntEnum):
     FLOAT = 3
 
 
-class ProductType(ZeroModel):
+class ProductType(ZeroModel, table=True):
 
     __tablename__ = "product_types"
     title : str = Field(max_length=32)
@@ -28,12 +31,11 @@ class ProductType(ZeroModel):
 
 
 
-class ProductAttribute(ZeroModel):
+class ProductAttribute(ZeroModel, table=True):
 
     __tablename__ = "product_attributes"
     title : str = Field(max_length=32)
-    product_type_uid: uuid.UUID = Field(foreign_key="product_types.uid",
-                                    sa_column_kwargs={"ondelete": "CASCADE"})
+    product_type_uid: uuid.UUID = Field(sa_column=ForeignKey("product_types.uid", ondelete="CASCADE"))
 
     attribute_type: AttributeType = Field(
         sa_column_kwargs={"nullable": False}, default=AttributeType.INTEGER
@@ -44,9 +46,7 @@ class ProductAttribute(ZeroModel):
 
 
 
-
-
-class ProductCategoryLink(SQLModel, table=True):
+class ProductCategoryLink(ZeroModel, table=True):
     __tablename__ = "product_category_link"
     product_uid: uuid.UUID = Field(foreign_key="products.uid", primary_key=True)
     category_uid: uuid.UUID = Field(foreign_key="categories.uid", primary_key=True)
@@ -54,15 +54,14 @@ class ProductCategoryLink(SQLModel, table=True):
 
 
 
-class Category(ZeroModel):
+
+class Category(ZeroModel, table=True):
     __tablename__ = "categories"
 
     name: str
     image_url: Optional[str] = Field(default=None, max_length=255) 
     parent_uid: Optional[uuid.UUID] = Field(
-        default=None,
-        foreign_key="categories.uid",
-        sa_column_kwargs={"ondelete": "CASCADE"}  
+        sa_column=ForeignKey("categories.uid", ondelete="CASCADE")
     )
     depth: int = Field(default=0, nullable=False)  
 
@@ -78,7 +77,7 @@ class Category(ZeroModel):
     )
 
 # listoner for considering depth
-@event.listens_for(AsyncSession, "before_flush")
+@event.listens_for(Session, "before_flush")
 def update_category_depth(session, flush_context, instances):
     for obj in session.new.union(session.dirty):
         if isinstance(obj, Category):
@@ -94,30 +93,28 @@ def update_children_depth(category: Category):
 
 
 
-class Brand(ZeroModel):
+
+
+class Brand(ZeroModel, table=True):
     __tablename__ = "brands"
     name: str = Field(max_length=32)
-    logo_url: Optional[str] = Field(default=None, max_length=255)  
+    logo_url: Optional[str] = Field(default=None)  
     products: list["Product"] = Relationship(back_populates="brand",
                                              passive_deletes=True)
 
 
 
 
-class Product(ZeroModel):
+class Product(ZeroModel, table=True):
 
     __tablename__ = "products"
     product_type_uid: uuid.UUID = Field(
-        nullable=False,
-        foreign_key="product_types.uid",
-        sa_column_kwargs={"ondelete": "CASCADE"}  
-    )
+        sa_column=ForeignKey("product_types.uid", ondelete="CASCADE")
+                )
     title: str = Field(max_length=32)
     description: Optional[str] = Field(default=None)
     brand_uid: uuid.UUID = Field(
-    nullable=False,
-    foreign_key="brands.uid",
-    sa_column_kwargs={"ondelete": "CASCADE"}  
+    sa_column=ForeignKey("brands.uid", ondelete="CASCADE")
     )
 
     product_type: ProductType = Relationship(back_populates="products")
@@ -132,22 +129,19 @@ class Product(ZeroModel):
     back_populates="product",
     passive_deletes=True
 )
+    
 
 
 
-class ProductAttributeValue(ZeroModel):
+class ProductAttributeValue(ZeroModel, table=True):
         __tablename__ = "product_attributes_values"
         value: str = Field(max_length=32)
 
         product_uid: uuid.UUID = Field(
-        nullable=False,
-        foreign_key="products.uid",
-        sa_column_kwargs={"ondelete": "CASCADE"}  
+        sa_column=ForeignKey("products.uid", ondelete="CASCADE")
         )
         product_attribute_uid: uuid.UUID = Field(
-        nullable=False,
-        foreign_key="product_attributes.uid",
-        sa_column_kwargs={"ondelete": "CASCADE"}  
+        sa_column=ForeignKey("product_attributes.uid", ondelete="CASCADE")
         )
 
         product: "Product" = Relationship(back_populates="attributes_values")
@@ -157,21 +151,18 @@ class ProductAttributeValue(ZeroModel):
             UniqueConstraint("product_uid", "product_attribute_uid"),
             Index(
                 "ix_unique_attr_value_ci",
-                func.lower(value),
+                func.lower("value"),  
                 unique=True
             ),
         )
-
 
 
 class ProductImage(ZeroModel, table=True):
     __tablename__ = "product_images"
 
     product_uid: uuid.UUID = Field(
-        foreign_key="products.uid",
-        nullable=False,
-        sa_column_kwargs={"ondelete": "CASCADE"}
-    )
+        sa_column=ForeignKey("products.uid", ondelete="CASCADE"),
+        )
     url: str = Field(max_length=255)   
     alt_text: str = Field(default="", max_length=128)  
 
